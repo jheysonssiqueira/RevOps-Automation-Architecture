@@ -1,0 +1,1393 @@
+{
+  "name": "Chatwoot ➔ Mautic ➔ PipeRun Master Flow (Sanitized)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chatwoot-master-v3",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -480,
+        864
+      ],
+      "id": "5076b8d9-40e7-4c9b-8db5-fd41d16d8728",
+      "name": "Recebe Chatwoot1",
+      "webhookId": "SEU_WEBHOOK_ID_AQUI"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "84af65f5-f027-46dc-aab4-01311b7b12e3",
+              "leftValue": "={{ $json.body.event }}",
+              "rightValue": "message_created",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "e9e984cc-24b8-4cbb-bd12-70b92d6e1ea8",
+              "leftValue": "={{ $json.body.private }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "f0a8d672-0e9e-4df7-a36c-9a4f4e72fbaf",
+              "leftValue": "={{ $json.body.content }}",
+              "rightValue": "/",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        128,
+        1056
+      ],
+      "id": "f48183ed-75d9-4ef8-865a-e6d3a6e513d5",
+      "name": "É um /comando?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "78788a10-23a5-485d-8b06-25f0e34c5efc",
+              "name": "comando",
+              "value": "={{ $json.body.content.trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "4020a10b-8d19-484c-b1bb-830252a13cc7",
+              "name": "telefone_limpo",
+              "value": "={{ $json.body.conversation.meta.sender.phone_number.replace(/\\D/g, '').replace(/^55/, '') }}",
+              "type": "string"
+            },
+            {
+              "id": "telefone_piperun_formatado",
+              "name": "telefone_piperun",
+              "value": "={{ '+55' + $json.body.conversation.meta.sender.phone_number.replace(/\\D/g, '').replace(/^55/, '') }}",
+              "type": "string"
+            },
+            {
+              "id": "set-account-cmd",
+              "name": "account_id",
+              "value": "={{ $json.body.account.id }}",
+              "type": "string"
+            },
+            {
+              "id": "set-conv-cmd",
+              "name": "conversation_id",
+              "value": "={{ $json.body.conversation.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        368,
+        1216
+      ],
+      "id": "25df803e-0867-473a-8d2e-a3088c67a7ea",
+      "name": "Trata Comando"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 1,
+        "options": {
+          "search": "={{ 'phone:%' + $json.telefone_limpo.slice(-8) + '% OR mobile:%' + $json.telefone_limpo.slice(-8) + '%' }}"
+        }
+      },
+      "type": "n8n-nodes-base.mautic",
+      "typeVersion": 1,
+      "position": [
+        592,
+        1216
+      ],
+      "id": "2d529fb5-6a7d-4284-a613-11e6bb5f170b",
+      "name": "Busca Lead para Comando",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Trata Comando').first().json.comando }}",
+                    "rightValue": "/campanha_clinica",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "4220b3cb-13f5-4dce-a4a0-73df99723018"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Trata Comando').first().json.comando }}",
+                    "rightValue": "/pesquisa_nps",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "d094eb73-e3c3-4d64-ba1f-db90c8a57199"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "dab208ee-9f99-4a7e-acf8-f2bbf9809c0a",
+                    "leftValue": "={{ $('Trata Comando').first().json.comando }}",
+                    "rightValue": "/campanha_ExperIP",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        1040,
+        1200
+      ],
+      "id": "fbd0b87d-88ef-486e-a09b-08d42aa66992",
+      "name": "Qual Comando?"
+    },
+    {
+      "parameters": {
+        "resource": "contactSegment",
+        "contactId": "={{ $('Busca Lead para Comando').first().json.id }}",
+        "segmentId": "=41"
+      },
+      "type": "n8n-nodes-base.mautic",
+      "typeVersion": 1,
+      "position": [
+        1264,
+        928
+      ],
+      "id": "5279474c-b30c-45df-929a-48eeeb1b7590",
+      "name": "Gatilho Clínica (Seg 50)"
+    },
+    {
+      "parameters": {
+        "url": "https://api.pipe.run/v1/deals",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "mobile_phone",
+              "value": "={{ $('Trata Comando').first().json.telefone_piperun }}"
+            },
+            {
+              "name": "pipeline_id",
+              "value": "9619"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Token",
+              "value": "SEU_TOKEN_PIPERUN_AQUI"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1264,
+        1312
+      ],
+      "id": "dada9672-bd7d-4d8d-b837-5d45c8109355",
+      "name": "Busca Oportunidade (Cmd)"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://api.pipe.run/v1/deals/{{ $json.data[0].id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Token",
+              "value": "SEU_TOKEN_PIPERUN_AQUI"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"stage_id\": 49666\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1712,
+        1312
+      ],
+      "id": "4c4a62eb-ad46-4ab3-8c11-cf16beaee2da",
+      "name": "Move para Proposta (PipeRun)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://chat.suaempresa.com.br/api/v1/accounts/{{ $('Trata Comando').first().json.account_id }}/conversations/{{ $('Trata Comando').first().json.conversation_id }}/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api_access_token",
+              "value": "SEU_TOKEN_CHATWOOT_AQUI"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"content\": \"Olá! O seu atendimento de hoje foi concluído. 🌟\\n\\nPara garantir que estamos sempre entregando o melhor serviço, como você avalia o nosso papo de hoje?\\n\\nLeva só 5 segundos, eu prometo! 🙏\\n\\n👉 Clique aqui para dar sua nota: https://marketing.suaempresa.com.br/pesquisa-de-nps---chat-experip?lead={{ $('Busca Lead para Comando').first().json.id }}\",\n  \"message_type\": \"outgoing\",\n  \"private\": false\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1264,
+        1120
+      ],
+      "id": "ca7bf5d6-b755-4ba6-9311-cf0c4ca03010",
+      "name": "Envia Pesquisa WhatsApp"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "check-private",
+              "leftValue": "={{ $json.body.private }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "check-event-msg",
+              "leftValue": "={{ $json.body.event }}",
+              "rightValue": "message_created",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        128,
+        576
+      ],
+      "id": "936a819b-65b8-49fe-b7fa-971edb1cd308",
+      "name": "É Mensagem Real?1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-phone",
+              "name": "telefone_limpo",
+              "value": "={{ $json.body.conversation.meta.sender.phone_number.replace(/\\D/g, '').replace(/^55/, '') }}",
+              "type": "string"
+            },
+            {
+              "id": "telefone_piperun_formatado",
+              "name": "telefone_piperun",
+              "value": "={{ '+55' + $json.body.conversation.meta.sender.phone_number.replace(/\\D/g, '').replace(/^55/, '') }}",
+              "type": "string"
+            },
+            {
+              "id": "set-text",
+              "name": "mensagem_texto",
+              "value": "={{ $json.body.content || 'Áudio/Mídia' }}",
+              "type": "string"
+            },
+            {
+              "id": "set-direction",
+              "name": "direcao",
+              "value": "={{ $json.body.message_type === 'outgoing' ? 'SIM' : 'NAO' }}",
+              "type": "string"
+            },
+            {
+              "id": "set-account",
+              "name": "account_id",
+              "value": "={{ $json.body.account.id }}",
+              "type": "string"
+            },
+            {
+              "id": "set-conv",
+              "name": "conversation_id",
+              "value": "={{ $json.body.conversation.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        368,
+        576
+      ],
+      "id": "0af4fa58-cd16-4ae8-a914-03e31a5af0bf",
+      "name": "Trata Dados Chatwoot1"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Trata Dados Chatwoot1').first().json.mensagem_texto }}",
+                    "rightValue": "@",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "rule-email"
+                  },
+                  {
+                    "id": "33b2a5eb-cddb-417f-aa9b-f1de16bf784a",
+                    "leftValue": "={{ $('Trata Dados Chatwoot1').first().json.mensagem_texto }}",
+                    "rightValue": "cnpj",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "or"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        32,
+        256
+      ],
+      "id": "ed17b851-24fe-4888-ba82-389d04c6af62",
+      "name": "Cão de Guarda IA (Tem @ ou CNPJ?)"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 1,
+        "options": {
+          "search": "={{ 'phone:%' + $('Trata Dados Chatwoot1').first().json.telefone_limpo.slice(-8) + '% OR mobile:%' + $('Trata Dados Chatwoot1').first().json.telefone_limpo.slice(-8) + '%' }}"
+        }
+      },
+      "type": "n8n-nodes-base.mautic",
+      "typeVersion": 1,
+      "position": [
+        592,
+        576
+      ],
+      "id": "a53e8e4d-5f92-4071-8920-ca1b43adf564",
+      "name": "Busca Lead no Mautic1",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "check-lead",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        816,
+        576
+      ],
+      "id": "fdbff3d6-298e-44c0-bcd9-3c2ef46808f2",
+      "name": "Está no Mautic?1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://marketing.suaempresa.com.br/api/notes/new",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "mauticApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"lead\": $json.id, \"text\": \"[\" + ($('Trata Dados Chatwoot1').first().json.direcao == 'SIM' ? 'Equipe' : 'Cliente') + \"]: \" + $('Trata Dados Chatwoot1').first().json.mensagem_texto, \"type\": \"general\" } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1056,
+        576
+      ],
+      "id": "cc2a0978-7538-4509-9e8b-c050ca3acace",
+      "name": "Adiciona Nota Mautic"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Trata Dados Chatwoot1').first().json.direcao }}",
+                    "rightValue": "NAO",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "rule-cliente"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Trata Dados Chatwoot1').first().json.direcao }}",
+                    "rightValue": "SIM",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "rule-equipe"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        1296,
+        576
+      ],
+      "id": "23bb094b-d7bb-4fa6-9469-9799ec14f2f9",
+      "name": "Origem: Cliente ou Empresa?1"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "contactId": "={{ $('Busca Lead no Mautic1').first().json.id }}",
+        "updateFields": {
+          "customFieldsUi": {
+            "customFieldValues": [
+              {
+                "fieldId": "status_whatsapp",
+                "fieldValue": "🟢 Aguardando Equipe"
+              }
+            ]
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mautic",
+      "typeVersion": 1,
+      "position": [
+        1552,
+        448
+      ],
+      "id": "8567e952-669d-4efe-8daf-213cbd195a25",
+      "name": "Carimba Lead: 🟢 [WA]1"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "contactId": "={{ $('Busca Lead no Mautic1').first().json.id }}",
+        "updateFields": {
+          "customFieldsUi": {
+            "customFieldValues": [
+              {
+                "fieldId": "status_whatsapp",
+                "fieldValue": "🟦 Respondido"
+              }
+            ]
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mautic",
+      "typeVersion": 1,
+      "position": [
+        1552,
+        672
+      ],
+      "id": "efc50733-524f-4027-9bed-d7df129d04dd",
+      "name": "Carimba Equipe: 🟦 [EQUIPE]1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://chat.suaempresa.com.br/api/v1/accounts/{{ $('Trata Dados Chatwoot1').first().json.account_id }}/conversations/{{ $('Trata Dados Chatwoot1').first().json.conversation_id }}/labels",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api_access_token",
+              "value": "SEU_TOKEN_CHATWOOT_AQUI"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"labels\": [\"nao_e_cliente\"]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1056,
+        768
+      ],
+      "id": "b2a9aaa1-0331-44c3-b729-4f546fbcf5ac",
+      "name": "Adiciona Tag no Chatwoot1"
+    },
+    {
+      "parameters": {
+        "url": "https://api.pipe.run/v1/deals",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "mobile_phone",
+              "value": "={{ $('Trata Dados Chatwoot1').first().json.telefone_piperun }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Token",
+              "value": "SEU_TOKEN_PIPERUN_AQUI"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        880,
+        256
+      ],
+      "id": "88e66158-13fd-49fd-9ece-879caaaa721e",
+      "name": "Busca Deals (Telefone)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Pega os cards que o PipeRun achou pelo telefone\nconst inputData = $input.all()[0].json.data;\n\n// 2. Procura o card que pertence ESTRITAMENTE ao Funil de Marketing (ID 9619)\nlet meuDeal = inputData ? inputData.find(d => d.pipeline_id === 9619) : null;\n\n// 3. O CADEADO DE TITÂNIO: Se não achar no funil de Marketing, morre aqui! (Sem gambiarras)\nif (!meuDeal) {\n    throw new Error('CADEADO ATIVO: Cliente não está no Funil de Marketing do PipeRun. Ignorando injeção de dados.');\n}\n\n// 4. Busca os dados extraídos pelo RegEx local (E-mail e CNPJ)\nconst dadosExtraidos = $('Extrator Local (Sem Erros)').first().json.dados_extraidos;\n\nreturn [{\n  json: {\n    deal_id: meuDeal.id,\n    company_id: meuDeal.company_id,\n    novo_email: dadosExtraidos.novo_email,\n    novo_cnpj: dadosExtraidos.novo_cnpj,\n    texto_nota: `🤖 [SISTEMA DE DADOS]\\nO cliente informou novos dados no WhatsApp:\\n📧 E-mail: ${dadosExtraidos.novo_email || 'Não informado'}\\n🏢 CNPJ: ${dadosExtraidos.novo_cnpj || 'Não informado'}`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        256
+      ],
+      "id": "d7cceb3e-4862-4766-af0f-95c8a2334981",
+      "name": "Prepara Notas e Dados"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://api.pipe.run/v1/companies/{{ $json.company_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Token",
+              "value": "SEU_TOKEN_PIPERUN_AQUI"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"cnpj\": \"{{ $json.novo_cnpj }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1328,
+        256
+      ],
+      "id": "54f63e3b-34c8-485e-94da-e1195af39c5a",
+      "name": "Injeta CNPJ (PipeRun)",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.pipe.run/v1/deals/{{ $('Prepara Notas e Dados').first().json.deal_id }}/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Token",
+              "value": "SEU_TOKEN_PIPERUN_AQUI"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $('Prepara Notas e Dados').first().json.texto_nota }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1552,
+        256
+      ],
+      "id": "f144fe8b-1ca1-46f0-8578-21c3c3bb2b45",
+      "name": "Cria Nota (PipeRun)"
+    },
+    {
+      "parameters": {
+        "jsCode": "const texto = $('Trata Dados Chatwoot1').first().json.mensagem_texto;\nconst emailMatch = texto.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\\.[a-zA-Z0-9._-]+)/gi);\n\n// Pega 14 números\nconst numerosApenas = texto.replace(/\\D/g, ''); \nconst cnpjMatch = numerosApenas.match(/\\d{14}/g);\nconst cnpjBruto = cnpjMatch ? cnpjMatch[0] : null;\n\n// Função sênior para validar se o CNPJ é real (evita erro 422)\nfunction validarCNPJ(cnpj) {\n    if (!cnpj || cnpj.length !== 14 || /^(\\d)\\1+$/.test(cnpj)) return false;\n    let tamanho = cnpj.length - 2;\n    let numeros = cnpj.substring(0, tamanho);\n    let digitos = cnpj.substring(tamanho);\n    let soma = 0;\n    let pos = tamanho - 7;\n    for (let i = tamanho; i >= 1; i--) {\n        soma += numeros.charAt(tamanho - i) * pos--;\n        if (pos < 2) pos = 9;\n    }\n    let resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);\n    if (resultado != digitos.charAt(0)) return false;\n    tamanho = tamanho + 1;\n    numeros = cnpj.substring(0, tamanho);\n    soma = 0;\n    pos = tamanho - 7;\n    for (let i = tamanho; i >= 1; i--) {\n        soma += numeros.charAt(tamanho - i) * pos--;\n        if (pos < 2) pos = 9;\n    }\n    resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);\n    return resultado == digitos.charAt(1);\n}\n\nconst cnpjValido = validarCNPJ(cnpjBruto) ? cnpjBruto : null;\n\nreturn [{\n  json: {\n    dados_extraidos: {\n      novo_email: emailMatch ? emailMatch[0] : null,\n      novo_cnpj: cnpjValido\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        256
+      ],
+      "id": "ef530848-653c-4b1e-9fe3-c7706c028e2a",
+      "name": "Extrator Local (Sem Erros)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7dc8e8e0-5a6f-470a-9eaf-80fa2d078ffe",
+              "leftValue": "={{ $json.mensagem_texto.length }}",
+              "rightValue": 50,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        352,
+        32
+      ],
+      "id": "db09974e-299f-4127-bfd6-33f86e3af518",
+      "name": "Mensagem com Dor? (>50 carac)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=SEU_TOKEN_GEMINI_AQUI",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n  JSON.stringify({\n    \"contents\": [\n      {\n        \"parts\": [\n          {\n            \"text\": \"Atue como o Diretor Comercial Sênior de Alta Performance da [SUA_EMPRESA]. Sua missão é ler a dor do cliente, mapear TODAS as soluções necessárias no portfólio (visão estratégica) e gerar uma resposta de vendas (pitch) pronta para o nosso time copiar e enviar.\\n\\nREGRAS DE POSTURA (MODO CEO):\\n1. ZERO emojis. Nenhuma formatação infantil. Tom executivo.\\n2. Texto curto, direto e focado na resolução do problema. Sem discursos imensos.\\n3. O Pitch OBRIGATORIAMENTE deve conter os sites oficiais dos produtos sugeridos.\\n4. REGRA ABSOLUTA PARA A PRODUTO 1: Se a solução ideal for a Produto 1, o pitch DEVE enfatizar o teste prático com as seguintes palavras exatas: 'Acesse o site https://www.produto1.com.br e faça o teste preenchendo os campos. Se não aparecer em sua tela para preencher, clique no número acima lado esquerdo 0800-000-0000. O painel irá aparecer em sua tela, pois você irá receber uma ligação da nossa IA para tirar a prova real.'\\n5. VISÃO ESTRATÉGICA (CROSS-SELL): Seja inteligente e identifique múltiplas dores. Se o cliente tem problema com telefone e WhatsApp, não ofereça apenas um produto. Combine soluções e mostre como elas resolvem o problema de forma integrada.\\n\\nPORTFÓLIO [SUA_EMPRESA] E SITES OFICIAIS:\\n- Produto 1 (https://www.produto1.com.br): Agente de IA de Voz 24/7. Acaba com ligações perdidas.\\n- Produto 2 (https://www.produto2.com.br): Plataforma Omnichannel. Centraliza WhatsApp e organiza o atendimento da equipe.\\n- Produto 3 (https://produto3.com.br): Integra PABX ao WhatsApp (transbordo de chamadas não atendidas).\\n- Produto 4 (https://www.produto4.com.br): Nome e logo da empresa na tela de quem recebe a ligação (anti-spam).\\n\\nMENSAGEM DO CLIENTE:\\n\" + $('Trata Dados Chatwoot1').first().json.mensagem_texto + \"\\n\\nRETORNE EXATAMENTE NESTE FORMATO (sem adicionar mais nada):\\nDIAGNÓSTICO: [1 frase executiva de diagnóstico cruzando a dor com os produtos escolhidos]\\nPITCH: [O texto exato para o vendedor enviar ao cliente. Persuasivo, oferecendo a solução completa (ou combinada) e com os respectivos links.]\"\n          }\n        ]\n      }\n    ]\n  })\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        592,
+        32
+      ],
+      "id": "db910a1a-842b-4901-9cd0-9eeca7add25b",
+      "name": "Co-Piloto Comercial (IA)",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://chat.suaempresa.com.br/api/v1/accounts/{{ $('Trata Dados Chatwoot1').first().json.account_id }}/conversations/{{ $('Trata Dados Chatwoot1').first().json.conversation_id }}/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api_access_token",
+              "value": "SEU_TOKEN_CHATWOOT_AQUI"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "={{ '🤖 [CO-PILOTO IA]\\n\\n' + $json.candidates[0].content.parts[0].text }}"
+            },
+            {
+              "name": "message_type",
+              "value": "outgoing"
+            },
+            {
+              "name": "private",
+              "value": "=true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        832,
+        32
+      ],
+      "id": "4220fb42-c035-4164-b12c-6f510cb6881f",
+      "name": "Injeta Pitch no Chatwoot"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0f3a096e-2bf6-40b5-b899-8261936f9f36",
+              "leftValue": "={{ $json.body.sender.name }}",
+              "rightValue": "EvolutionAPI",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "bacb65f0-f5f5-49bb-8651-a0c05f8a3b20",
+              "leftValue": "={{ $json.body.inbox?.id }}",
+              "rightValue": 31,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -272,
+        864
+      ],
+      "id": "5dc830cb-ddd4-404a-806a-c24db0c24b16",
+      "name": "Gateway (Porteiro)"
+    },
+    {
+      "parameters": {
+        "resource": "contactSegment",
+        "contactId": "={{ $('Busca Lead para Comando').first().json.id }}",
+        "segmentId": "=52"
+      },
+      "type": "n8n-nodes-base.mautic",
+      "typeVersion": 1,
+      "position": [
+        1264,
+        1504
+      ],
+      "id": "868c2de0-b7cb-401b-a228-2a0aecbfb966",
+      "name": "Gatilho Outro Setor (Seg 52)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Pega a lista de cards que a busca do PipeRun retornou\nconst deals = $input.all()[0].json.data;\n\n// 2. Se o cliente não tem nenhum card, para por aqui\nif (!deals || deals.length === 0) {\n    throw new Error('CADEADO ATIVO: Cliente não possui card no PipeRun.');\n}\n\n// 3. Procura ESTRITAMENTE o card que pertence ao Funil de Marketing (ID 9619)\nconst dealMarketing = deals.find(d => d.pipeline_id === 9619);\n\n// 4. A BLINDAGEM MÁXIMA: Se achou um card, mas ele NÃO é de Marketing (ex: Suporte)...\nif (!dealMarketing) {\n    throw new Error('CADEADO ATIVO: O cliente possui card, mas NÃO está no Funil de Marketing. Comando abortado para proteger o CRM.');\n}\n\n// 5. Se passou no teste, devolve a estrutura exata para o próximo nó usar\nreturn [{\n    json: {\n        data: [ dealMarketing ]\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1488,
+        1312
+      ],
+      "id": "6a5c53c7-1230-4a18-80de-ef7a5e72133c",
+      "name": "Cadeado Comando"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "187aed58-8df3-46e7-898f-d756d127cc88",
+              "leftValue": "={{ $json.id || '' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        816,
+        1216
+      ],
+      "id": "049354c8-720f-4f52-b625-8959aa73e5a7",
+      "name": "Lead Existe no Mautic? (Cmd)"
+    },
+    {
+      "parameters": {
+        "content": "## FLUXO DE CAMPANHA",
+        "height": 800,
+        "width": 1856
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        896
+      ],
+      "typeVersion": 1,
+      "id": "3eb67df1-deca-4bb9-8b72-93654f031c58",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Mecanismo de Comunicação",
+        "height": 224,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -544,
+        768
+      ],
+      "typeVersion": 1,
+      "id": "50defef0-ab43-469b-88dc-a8c587a663fb",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## ACOMPANHAMENTO DE MENSAGENS",
+        "height": 464,
+        "width": 1744,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        112,
+        432
+      ],
+      "typeVersion": 1,
+      "id": "f2a57fdd-22b5-47f3-a421-c803bc1cb519",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## INJETA NOTA NO CRM",
+        "height": 224,
+        "width": 1856,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        208
+      ],
+      "typeVersion": 1,
+      "id": "3929f26b-cb65-4de1-a0fe-ae7ca9514c4a",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## Interação com IA",
+        "height": 208,
+        "width": 1216,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "f201f707-3b7e-4999-b248-2a2b559b97cc",
+      "name": "Sticky Note4"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Recebe Chatwoot1": {
+      "main": [
+        [
+          {
+            "node": "Gateway (Porteiro)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É um /comando?": {
+      "main": [
+        [
+          {
+            "node": "Trata Comando",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trata Comando": {
+      "main": [
+        [
+          {
+            "node": "Busca Lead para Comando",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Busca Lead para Comando": {
+      "main": [
+        [
+          {
+            "node": "Lead Existe no Mautic? (Cmd)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qual Comando?": {
+      "main": [
+        [
+          {
+            "node": "Gatilho Clínica (Seg 50)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Busca Oportunidade (Cmd)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Envia Pesquisa WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gatilho Outro Setor (Seg 52)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Busca Oportunidade (Cmd)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Busca Oportunidade (Cmd)": {
+      "main": [
+        [
+          {
+            "node": "Cadeado Comando",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É Mensagem Real?1": {
+      "main": [
+        [
+          {
+            "node": "Trata Dados Chatwoot1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trata Dados Chatwoot1": {
+      "main": [
+        [
+          {
+            "node": "Busca Lead no Mautic1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Mensagem com Dor? (>50 carac)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cão de Guarda IA (Tem @ ou CNPJ?)": {
+      "main": [
+        [
+          {
+            "node": "Extrator Local (Sem Erros)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Busca Lead no Mautic1": {
+      "main": [
+        [
+          {
+            "node": "Está no Mautic?1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Cão de Guarda IA (Tem @ ou CNPJ?)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Está no Mautic?1": {
+      "main": [
+        [
+          {
+            "node": "Adiciona Nota Mautic",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Adiciona Tag no Chatwoot1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Adiciona Nota Mautic": {
+      "main": [
+        [
+          {
+            "node": "Origem: Cliente ou Empresa?1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Origem: Cliente ou Empresa?1": {
+      "main": [
+        [
+          {
+            "node": "Carimba Lead: 🟢 [WA]1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Carimba Equipe: 🟦 [EQUIPE]1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Busca Deals (Telefone)": {
+      "main": [
+        [
+          {
+            "node": "Prepara Notas e Dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepara Notas e Dados": {
+      "main": [
+        [
+          {
+            "node": "Injeta CNPJ (PipeRun)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Injeta CNPJ (PipeRun)": {
+      "main": [
+        [
+          {
+            "node": "Cria Nota (PipeRun)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extrator Local (Sem Erros)": {
+      "main": [
+        [
+          {
+            "node": "Busca Deals (Telefone)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensagem com Dor? (>50 carac)": {
+      "main": [
+        [
+          {
+            "node": "Co-Piloto Comercial (IA)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Co-Piloto Comercial (IA)": {
+      "main": [
+        [
+          {
+            "node": "Injeta Pitch no Chatwoot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gateway (Porteiro)": {
+      "main": [
+        [
+          {
+            "node": "É Mensagem Real?1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "É um /comando?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cadeado Comando": {
+      "main": [
+        [
+          {
+            "node": "Move para Proposta (PipeRun)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Existe no Mautic? (Cmd)": {
+      "main": [
+        [
+          {
+            "node": "Qual Comando?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "79b26a16-ad15-491b-8f25-262889390eef",
+  "meta": {
+    "instanceId": "4975a6de86b8421fe96e5e09af1ee43b8d327a1309980a0d2a018649485905b1"
+  },
+  "id": "fXiJI94oA2ejM15T",
+  "tags": []
+}

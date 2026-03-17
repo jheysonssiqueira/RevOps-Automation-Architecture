@@ -1,0 +1,217 @@
+{
+  "name": "PipeRun > Mautic: Entrada de Lead (Sanitized)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "piperun-novo-lead",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -688,
+        112
+      ],
+      "id": "e4f17377-7d17-41c1-b3db-b64e20627427",
+      "name": "Webhook",
+      "webhookId": "SEU_WEBHOOK_ID_AQUI"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 1,
+        "options": {
+          "search": "={{ $json.body.company.contact_emails[0].address }}"
+        }
+      },
+      "type": "n8n-nodes-base.mautic",
+      "typeVersion": 1,
+      "position": [
+        -448,
+        112
+      ],
+      "id": "74d77119-e556-40df-a65e-09d39a412cd5",
+      "name": "Busca por E-mail",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "check-exists",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -240,
+        112
+      ],
+      "id": "360c4472-f65a-44a6-8336-63f764f93036",
+      "name": "Lead Existe?"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "contactId": "={{ $json.id }}",
+        "updateFields": {
+          "customFieldsUi": {
+            "customFieldValues": [
+              {
+                "fieldId": "setor_piperun",
+                "fieldValue": "Marketing"
+              },
+              {
+                "fieldId": "segmento",
+                "fieldValue": "={{ $('Webhook').item.json.body.company.segment.name }}"
+              },
+              {
+                "fieldId": "etapa_funil_piperun",
+                "fieldValue": "={{ $('Webhook').item.json.body.stage.name }}"
+              },
+              {
+                "fieldId": "mobile",
+                "fieldValue": "={{ $('Webhook').item.json.body.person.contact_phones[0].number }}"
+              },
+              {
+                "fieldId": "phone",
+                "fieldValue": "={{ $('Webhook').item.json.body.company.contact_phones.map(p => p.number).join(' / ') }}"
+              },
+              {
+                "fieldId": "emails_adicionais_piperun",
+                "fieldValue": "={{ $('Webhook').item.json.body.company.contact_emails.map(e => e.address).join(' / ') }}"
+              }
+            ]
+          },
+          "firstName": "={{ $('Webhook').item.json.body.title }}"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mautic",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "9ac45cbe-dd22-4278-b7d4-e135388db983",
+      "name": "Atualiza Contato"
+    },
+    {
+      "parameters": {
+        "email": "={{ $('Webhook').item.json.body.company.contact_emails[0].address }}",
+        "firstName": "={{ $('Webhook').item.json.body.title }}",
+        "additionalFields": {
+          "customFieldsUi": {
+            "customFieldValues": [
+              {
+                "fieldId": "setor_piperun",
+                "fieldValue": "Marketing"
+              },
+              {
+                "fieldId": "segmento",
+                "fieldValue": "={{ $('Webhook').item.json.body.company.segment.name }}"
+              },
+              {
+                "fieldId": "etapa_funil_piperun",
+                "fieldValue": "={{ $('Webhook').item.json.body.stage.name }}"
+              },
+              {
+                "fieldId": "mobile",
+                "fieldValue": "={{ $('Webhook').item.json.body.person.contact_phones[0].number }}"
+              },
+              {
+                "fieldId": "phone",
+                "fieldValue": "={{ $('Webhook').item.json.body.company.contact_phones.map(p => p.number).join(' / ') }}"
+              },
+              {
+                "fieldId": "emails_adicionais_piperun",
+                "fieldValue": "={{ $('Webhook').item.json.body.company.contact_emails.map(e => e.address).join(' / ') }}"
+              }
+            ]
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mautic",
+      "typeVersion": 1,
+      "position": [
+        0,
+        224
+      ],
+      "id": "bf26b9df-d73b-4ff0-a970-87fad0029624",
+      "name": "Cria Contato"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Busca por E-mail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Busca por E-mail": {
+      "main": [
+        [
+          {
+            "node": "Lead Existe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Existe?": {
+      "main": [
+        [
+          {
+            "node": "Atualiza Contato",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Cria Contato",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "30d1f9ea-a200-48b0-b658-d0f16c8d13a0",
+  "meta": {
+    "instanceId": "4975a6de86b8421fe96e5e09af1ee43b8d327a1309980a0d2a018649485905b1"
+  },
+  "id": "ySu0XuLienD8wWHL",
+  "tags": []
+}
