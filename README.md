@@ -1,4 +1,4 @@
-https://github.com/user-attachments/assets/9b0ec02c-5f16-4093-a031-2f9b1acf9414
+https://github.com/user-attachments/assets/27d99e9d-e7c8-481b-9e11-a5f00927b4a6
 # 🚀 Arquitetura de Automação & RevOps (Event-Driven)
 
 Bem-vindo ao repositório de demonstração da arquitetura de **Revenue Operations (RevOps)** que desenvolvi para unificar as frentes de Atendimento, Marketing e Vendas.
